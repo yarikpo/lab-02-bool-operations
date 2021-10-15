@@ -6,6 +6,7 @@
  *	union: <name_1>|<name_2> -> returns set
  *	intersection: <name_1>&<name_2> -> returns set
  *	compliment: <name_1>\<name_2> -> return set
+ *	equals: <name_1>~<name_2> -> return set
  *	show: -> writes all sets in console
  *	do: <command> -> writes result of expression in console ( example: do (A\B\C)|(B\A\C)|(C\A\B)|(A&B&C) )
  *	! -> & -> | -> \
@@ -108,7 +109,8 @@ public:
 			" *	union: <name_1>+<name_2> -> returns set\n" <<
 			" *	intersection: <name_1>*<name_2> -> returns set\n" <<
 			" *	compliment: <name_1>><name_2> -> return set\n" <<
-			" *	! -> * -> + -> >\n" <<
+			" *	equals: <name_1>~<name_2> -> return set\n" <<
+			" *	! -> * -> + -> > -> ~\n" <<
 			" *	show: -> writes all sets in console\n" <<
 			" *	do: <command> -> writes result of expression in console ( example: do !((!x+!y)*!t+!z) )\n";
 	}
@@ -158,10 +160,11 @@ public:
 		stack<mySet*> st_set;
 		stack<char> st_operator;
 
-		importance['!'] = 4;
-		importance['*'] = 3;
-		importance['+'] = 2;
-		importance['>'] = 1;
+		importance['!'] = 5;
+		importance['*'] = 4;
+		importance['+'] = 3;
+		importance['>'] = 2;
+		importance['~'] = 1;
 
 		if (DEBUG)
 			cout << "\n\n\n\noperate command\n\n";
@@ -206,6 +209,8 @@ public:
 									*set_add = *(union_set(set_1, set_2));
 								if (symb == '>')
 									*set_add = *(compliment(set_1, set_2));
+								if (symb == '~')
+									*set_add = *(equals(set_1, set_2));
 								st_set.push(set_add);
 							}
 						}
@@ -241,6 +246,8 @@ public:
 								*set_add = *(union_set(set_1, set_2));
 							if (symb == '>')
 								*set_add = *(compliment(set_1, set_2));
+							if (symb == '~')
+								*set_add = *(equals(set_1, set_2));
 							st_set.push(set_add);
 						}
 					}
@@ -337,11 +344,29 @@ public:
 		return result;
 	}
 
+	mySet* equals(mySet* to_equal1, mySet* to_equal2) {
+		string val1 = to_equal1->get_objects()[0];
+		string val2 = to_equal2->get_objects()[0];
+		
+		mySet* result = new mySet();
+		if (val1 == val2) {
+			result->add(vector<string>{"1"});
+		}
+		else {
+			result->add(vector<string>{"0"});
+		}
+
+		if (DEBUG)
+			cout << "intersect\n";
+
+		return result;
+	}
+
 private:
 	string get_part_command(string command) {
 		string result = "";
 		for (int i = 0; i < (int)command.length(); ++i) {
-			if (command[i] == '!' || command[i] == '*' || command[i] == '+' || command[i] == '>' || command[i] == '(' || command[i] == ')')
+			if (command[i] == '!' || command[i] == '*' || command[i] == '+' || command[i] == '>' || command[i] == '(' || command[i] == ')' || command[i] == '~')
 				break;
 
 			result+= command[i];
@@ -354,7 +379,7 @@ private:
 		string result = "";
 		bool f = false;
 		for (int i = 0; i < (int)command.length(); ++i) {
-			if (command[i] == '!' || command[i] == '*' || command[i] == '+' || command[i] == '>' || command[i] == '(' || command[i] == ')')
+			if (command[i] == '!' || command[i] == '*' || command[i] == '+' || command[i] == '>' || command[i] == '(' || command[i] == ')' || command[i] == '~')
 				f = true;
 
 			if (f)
@@ -425,7 +450,7 @@ private:
 	string get_first_word(string str) {
 		string res = "";
 		for (int i = 0; i < (int)str.length(); ++i) {
-			if (str[i] != ' ' && str[i] != '+' && str[i] != '*' && str[i] != '>' && str[i] != '!')
+			if (str[i] != ' ' && str[i] != '+' && str[i] != '*' && str[i] != '>' && str[i] != '!' && str[i] != '~')
 				res+= str[i];
 			else
 				break;
@@ -440,7 +465,7 @@ private:
 		for (int i = 0; i < (int)str.length(); ++i) {
 			if (f && str[i] != ' ')
 				res+= str[i];
-			if (str[i] == ' ' || str[i] == '+' || str[i] == '*' || str[i] == '>' || str[i] == '!') {
+			if (str[i] == ' ' || str[i] == '+' || str[i] == '*' || str[i] == '>' || str[i] == '!' || str[i] == '~') {
 				if (f)
 					break;
 				else
